@@ -1,0 +1,48 @@
+[root@sandbox-hdp ~]# mkdir code
+[root@sandbox-hdp ~]# cd code
+[root@sandbox-hdp code]# ls
+[root@sandbox-hdp code]# vi mapper.py
+[root@sandbox-hdp code]# ls
+mapper.py
+[root@sandbox-hdp code]# vi reducer.py
+[root@sandbox-hdp code]# ls
+mapper.py  reducer.py
+[root@sandbox-hdp code]# vi ../word_count_data.txt
+[root@sandbox-hdp code]# ls
+mapper.py  reducer.py
+[root@sandbox-hdp code]# hdfs dfs -put ../word_count_data.txt /user/root/
+[root@sandbox-hdp code]# hdfs dfs -cat /user/root/word_count_data.txt
+i am a very good boy i am very good at python ayesha ayesha
+[root@sandbox-hdp code]# pwd
+/root/code
+[root@sandbox-hdp code]# hadoop jar /usr/hdp/current/hadoop-mapreduce-client/hadoop-streaming.jar \
+> -input /user/root/word_count_data.txt \
+> -output /user/root/wcoutputnewriyaz \
+> -mapper mapper.py \
+> -reducer reducer.py \
+> -file /root/code/mapper.py \
+> -file /root/code/reducer.py
+
+
+
+
+[root@sandbox-hdp code]# hdfs dfs -ls /user/root/wcoutputnewriyaz
+Found 2 items
+-rw-r--r--   1 root hdfs          0 2023-01-29 18:45 /user/root/wcoutputnewriyaz/_SUCCESS
+-rw-r--r--   1 root hdfs         56 2023-01-29 18:45 /user/root/wcoutputnewriyaz/part-00000
+
+
+*** OUTPUT 
+
+[root@sandbox-hdp code]# hdfs dfs -cat /user/root/wcoutputnewriyaz/part-00000
+a       1
+am      2
+at      1
+ayesha  2
+boy     1
+good    2
+i       2
+python  1
+very    2
+
+
