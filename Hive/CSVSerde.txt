@@ -1,0 +1,81 @@
+------------------------------------------------------------------
+Creating table on CSVSerDe
+------------------------------------------------------------------
+
+hive> CREATE TABLE csv_table(name string, location string)
+    > ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.OpenCSVSerde'
+    > WITH SERDEPROPERTIES (
+    >     "separatorChar" = ",",
+    >     "quoteChar"     = "\"",
+    >     "escapeChar"    = "\\"
+    > )
+    > STORED AS TEXTFILE
+    > TBLPROPERTIES ("skip.header.line.count"="1")
+    > ;
+OK
+Time taken: 0.8 seconds
+hive> exit
+    > ;
+	
+	
+------------------------------------------------------------------
+Decoding the Create statement
+------------------------------------------------------------------
+-- ',' is the separator between fields
+-- ',' inside "" will not be considered as separator
+-- '\' will be the escape character
+-- first line of file will be skipped
+	
+	
+------------------------------------------------------------------
+Sample CSV File
+------------------------------------------------------------------
+
+vi csv_file.csv
+name,location
+Amit, "BBSR,India"
+Sumit, "MUM,India"
+
+
+[root@sandbox-hdp ~]# ls
+anaconda-ks.cfg  json_file.json  riyaz.csv
+csv_file.csv     locations.txt   users.txt
+[root@sandbox-hdp ~]# cp csv_file.csv /tmp/
+[root@sandbox-hdp ~]# cp csv_file.csv /tmp/test
+[root@sandbox-hdp ~]# ls /tmp/test
+csv_file.csv  json_file.json  locations.txt  riyaz.csv  users.txt
+[root@sandbox-hdp ~]# hive
+ulog4j:WARN No such property [maxFileSize] in org.apache.log4j.DailyRollingFileAppender.
+s
+Logging initialized using configuration in file:/etc/hive/2.6.5.0-292/0/hive-log4j.properties
+ehive> use riyaz_db;
+OK
+Time taken: 1.078 seconds
+
+
+------------------------------------------------------------------
+Loading in the table
+------------------------------------------------------------------
+
+
+hive> LOAD DATA LOCAL INPATH '/tmp/csv_file.csv' OVERWRITE INTO TABLE csv_table ;
+Loading data to table riyaz_db.csv_table
+Table riyaz_db.csv_table stats: [numFiles=1, numRows=0, totalSize=52, rawDataSize=0]
+OK
+Time taken: 1.244 seconds
+
+------------------------------------------------------------------
+Querying the table
+------------------------------------------------------------------
+hive> select * from csv_table;
+OK
+Amit    BBSR,India
+Sumit   MUM,India
+Time taken: 0.282 seconds, Fetched: 2 row(s)
+
+
+hive> select location from csv_table;
+OK
+BBSR,India
+MUM,India
+Time taken: 0.125 seconds, Fetched: 2 row(s)

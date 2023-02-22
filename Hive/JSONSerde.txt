@@ -1,0 +1,68 @@
+--------------------------------------------------------
+CREATING TABLE USING JsonSerDe
+--------------------------------------------------------
+
+hive> use riyaz_db;
+OK
+Time taken: 1.005 seconds
+hive> CREATE TABLE json_table(name string, id bigint, skills array<string>)
+    > ROW FORMAT SERDE 'org.apache.hive.hcatalog.data.JsonSerDe'
+    > STORED AS TEXTFILE;
+OK
+Time taken: 0.853 seconds
+hive> exit
+    > ;
+	
+--------------------------------------------------------------------------------
+Sample JSON File
+--------------------------------------------------------------------------------
+
+vi json_file.json
+{"name":"Amit", "id":1, "skills":["Hadoop", "Python"]}
+{"name":"Sumit", "id":2, "skills":["Hadoop", "Hive"]}
+{"name":"Rohit", "id":3, "skills":["Oozie", "Python"]}
+
+[root@sandbox-hdp ~]# ls
+anaconda-ks.cfg  json_file.json  locations.txt  riyaz.csv  users.txt
+[root@sandbox-hdp ~]# cp json_file.json /tmp/
+[root@sandbox-hdp ~]# cp json_file.json /tmp/test
+[root@sandbox-hdp ~]# ls /tmp/test
+json_file.json  locations.txt  riyaz.csv  users.txt
+[root@sandbox-hdp ~]# hive
+use log4j:WARN No such property [maxFileSize] in org.apache.log4j.DailyRollingFileAppender.
+
+Logging initialized using configuration in file:/etc/hive/2.6.5.0-292/0/hive-log4j.properties
+
+hive> use riyaz_db;
+OK
+Time taken: 1.065 seconds
+
+---------------------------------------------------------------
+LOADING DATA IN TABLE
+-----------------------------------------------
+
+
+hive> LOAD DATA LOCAL INPATH '/tmp/json_file.json' OVERWRITE INTO TABLE json_table;
+Loading data to table riyaz_db.json_table
+Table riyaz_db.json_table stats: [numFiles=1, numRows=0, totalSize=164, rawDataSize=0]
+OK
+Time taken: 1.63 seconds
+
+------------------------------------------------
+QUERYING THE TABLE
+------------------------------------------------
+
+hive> select * from json_table;
+OK
+Amit    1       ["Hadoop","Python"]
+Sumit   2       ["Hadoop","Hive"]
+Rohit   3       ["Oozie","Python"]
+Time taken: 0.253 seconds, Fetched: 3 row(s)
+
+
+hive> select skills[0] from json_table;
+OK
+Hadoop
+Hadoop
+Oozie
+Time taken: 0.129 seconds, Fetched: 3 row(s)

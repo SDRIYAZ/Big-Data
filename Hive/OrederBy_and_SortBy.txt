@@ -1,0 +1,80 @@
+hive> use riyaz_db;
+OK
+Time taken: 1.365 seconds
+
+
+hive> SET hive.mapred.mode=nostrict; --default is nostrict
+    > SELECT * FROM users ORDER BY name ASC;
+Query ID = root_20230222090908_6e8897f4-0a12-472f-9ca7-ed4d3a146dbc
+Total jobs = 1
+Launching Job 1 out of 1
+Status: Running (Executing on YARN cluster with App id application_1677049801670_0018)
+
+--------------------------------------------------------------------------------
+        VERTICES      STATUS  TOTAL  COMPLETED  RUNNING  PENDING  FAILED  KILLED
+--------------------------------------------------------------------------------
+Map 1 ..........   SUCCEEDED      1          1        0        0       0       0
+Reducer 2 ......   SUCCEEDED      1          1        0        0       0       0
+--------------------------------------------------------------------------------
+VERTICES: 02/02  [==========================>>] 100%  ELAPSED TIME: 2.23 s
+--------------------------------------------------------------------------------
+OK
+1       Amit    100     DNA
+8       Chandra 500     DNA
+5       Kranti  100     FCS
+6       Mahoor  200     FCS
+2       Sumit   200     DNA
+4       Sunil   500     FCS
+3       Yadav   300     DNA
+Time taken: 3.747 seconds, Fetched: 7 row(s)
+
+
+hive> SELECT * FROM users SORT BY name ASC;
+Query ID = root_20230222090954_e6cd3d6c-6319-45d0-991f-61f37baa39b6
+Total jobs = 1
+Launching Job 1 out of 1
+Status: Running (Executing on YARN cluster with App id application_1677049801670_0018)
+
+--------------------------------------------------------------------------------
+        VERTICES      STATUS  TOTAL  COMPLETED  RUNNING  PENDING  FAILED  KILLED
+--------------------------------------------------------------------------------
+Map 1 ..........   SUCCEEDED      1          1        0        0       0       0
+Reducer 2 ......   SUCCEEDED      1          1        0        0       0       0
+--------------------------------------------------------------------------------
+VERTICES: 02/02  [==========================>>] 100%  ELAPSED TIME: 2.29 s
+--------------------------------------------------------------------------------
+OK
+1       Amit    100     DNA
+8       Chandra 500     DNA
+5       Kranti  100     FCS
+6       Mahoor  200     FCS
+2       Sumit   200     DNA
+4       Sunil   500     FCS
+3       Yadav   300     DNA
+Time taken: 2.82 seconds, Fetched: 7 row(s)
+
+
+hive> set mapred.reduce.tasks=2;
+hive> SELECT * FROM users SORT BY name ASC;
+Query ID = root_20230222091031_64c58a0f-cf7d-413e-a8c3-e7d7260f852e
+Total jobs = 1
+Launching Job 1 out of 1
+Status: Running (Executing on YARN cluster with App id application_1677049801670_0018)
+
+--------------------------------------------------------------------------------
+        VERTICES      STATUS  TOTAL  COMPLETED  RUNNING  PENDING  FAILED  KILLED
+--------------------------------------------------------------------------------
+Map 1 ..........   SUCCEEDED      1          1        0        0       0       0
+Reducer 2 ......   SUCCEEDED      2          2        0        0       0       0
+--------------------------------------------------------------------------------
+VERTICES: 02/02  [==========================>>] 100%  ELAPSED TIME: 4.00 s
+--------------------------------------------------------------------------------
+OK
+1       Amit    100     DNA
+5       Kranti  100     FCS
+4       Sunil   500     FCS
+3       Yadav   300     DNA
+8       Chandra 500     DNA
+6       Mahoor  200     FCS
+2       Sumit   200     DNA
+Time taken: 4.524 seconds, Fetched: 7 row(s)

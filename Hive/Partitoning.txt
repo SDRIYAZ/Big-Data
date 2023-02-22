@@ -1,0 +1,269 @@
+[root@sandbox-hdp ~]# vi riyaz.csv
+[root@sandbox-hdp ~]# cat riyaz.csv
+1,Riyaz,100,BLR
+2,Ayesha,200,BBSR
+3,Kabeer,300,HYD
+[root@sandbox-hdp ~]# hdfs dfs -ls /user/
+[root@sandbox-hdp ~]# hdfs dfs -ls /user/admin /
+Found 11 items
+drwxrwxrwx   - yarn   hadoop          0 2023-02-22 07:22 /app-logs
+drwxr-xr-x   - hdfs   hdfs            0 2018-06-18 16:13 /apps
+drwxr-xr-x   - yarn   hadoop          0 2018-06-18 14:52 /ats
+drwxr-xr-x   - hdfs   hdfs            0 2018-06-18 14:52 /hdp
+drwx------   - livy   hdfs            0 2018-06-18 15:11 /livy2-recovery
+drwxr-xr-x   - mapred hdfs            0 2018-06-18 14:52 /mapred
+drwxrwxrwx   - mapred hadoop          0 2018-06-18 14:52 /mr-history
+drwxr-xr-x   - hdfs   hdfs            0 2018-06-18 15:59 /ranger
+drwxrwxrwx   - spark  hadoop          0 2023-02-22 07:27 /spark2-history
+drwxrwxrwx   - hdfs   hdfs            0 2018-06-18 16:06 /tmp
+drwxr-xr-x   - hdfs   hdfs            0 2018-06-18 16:08 /user
+[root@sandbox-hdp ~]# hdfs dfs -put riyaz.csv /user/root
+[root@sandbox-hdp ~]# hdfs dfs -ls
+Found 2 items
+drwxr-xr-x   - root hdfs          0 2023-02-22 07:22 .hiveJars
+-rw-r--r--   1 root hdfs         38 2023-02-22 07:28 riyaz.csv
+[root@sandbox-hdp ~]# hdfs dfs -cat /user/root/riyaz.csv
+1,Riyaz,100,BLR
+2,Ayesha,200,BBSR
+3,Kabeer,300,HYD
+
+
+--------------------------------------------------
+CREATING emp_details TABLE
+----------------------------------------
+hive>use riyaz_db;
+
+hive> create table emp_details
+    > (
+    > emp_name string,
+    > unit string,
+    > exp int,
+    > location string
+    > )
+    > row format delimited
+    > fields terminated by ','
+	>STORED AS TEXTFILE;
+	
+OK
+Time taken: 0.712 seconds
+hive> LOAD DATA LOCAL INPATH '/tmp/riyaz.csv' INTO TABLE emp_details;
+FAILED: SemanticException Line 1:23 Invalid path ''/tmp/riyaz.csv'': No files matching path file:/tmp/riyaz.csv
+
+[root@sandbox-hdp ~]# cp riyaz.csv /tmp/
+[root@sandbox-hdp ~]# mkdir /tmp/test
+[root@sandbox-hdp ~]# chmod 777 /tmp/test
+[root@sandbox-hdp ~]# cp riyaz.csv /tmp/test
+[root@sandbox-hdp ~]# ls /tmp/test
+riyaz.csv
+[root@sandbox-hdp ~]# hive
+
+
+----------------------------------------------------------------------
+LOADING emp_details TABLE
+----------------------------------------------------------------------
+
+
+hive>use riyaz_db;
+
+
+hive> LOAD DATA LOCAL INPATH '/tmp/riyaz.csv' INTO TABLE emp_details;
+Loading data to table riyaz_db.emp_details
+Table riyaz_db.emp_details stats: [numFiles=1, numRows=0, totalSize=51, rawDataSize=0]
+OK
+Time taken: 1.234 seconds
+hive> select * from emp_details;
+OK
+1       Riyaz   100     BLR
+2       Ayesha  200     BBSR
+3       Kabeer  300     HYD
+Time taken: 0.13 seconds, Fetched: 3 row(s)
+
+hive> describe emp_details;
+OK
+emp_name                string
+unit                    string
+exp                     int
+location                string
+Time taken: 0.514 seconds, Fetched: 4 row(s)
+hive> describe formatted emp_details;
+OK
+# col_name              data_type               comment
+
+emp_name                string
+unit                    string
+exp                     int
+location                string
+
+# Detailed Table Information
+Database:               default
+Owner:                  root
+CreateTime:             Wed Feb 22 07:22:53 UTC 2023
+LastAccessTime:         UNKNOWN
+Protect Mode:           None
+Retention:              0
+Location:               hdfs://sandbox-hdp.hortonworks.com:8020/apps/hive/warehouse/emp_details
+Table Type:             MANAGED_TABLE
+Table Parameters:
+        COLUMN_STATS_ACCURATE   {\"BASIC_STATS\":\"true\"}
+        numFiles                0
+        numRows                 0
+        rawDataSize             0
+        totalSize               0
+        transient_lastDdlTime   1677050573
+
+# Storage Information
+SerDe Library:          org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
+InputFormat:            org.apache.hadoop.mapred.TextInputFormat
+OutputFormat:           org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
+Compressed:             No
+Num Buckets:            -1
+Bucket Columns:         []
+Sort Columns:           []
+Storage Desc Params:
+        field.delim             ,
+        serialization.format    ,
+Time taken: 0.486 seconds, Fetched: 35 row(s)
+
+hive> dfs -ls hdfs://sandbox-hdp.hortonworks.com:8020/apps/hive/warehouse/emp_details;
+
+
+----------------------------------------------------------------------
+CREATING emp_details_partitioned TABLE
+----------------------------------------------------------------------
+
+
+hive> create table emp_details_partitioned
+    > (
+    > emp_name string,
+    > unit string,
+    > exp int
+    > )
+    > partitioned by (location string);
+OK
+Time taken: 0.912 seconds
+
+
+----------------------------------------------------------------------
+LOADING emp_details_partitioned TABLE with Static Partitions
+----------------------------------------------------------------------
+
+
+hive> insert overwrite table emp_details_partitioned
+    > partition(location = 'BBSR')
+    > select emp_name, unit, exp from emp_details
+    > where location = 'BBSR';
+Query ID = root_20230222080544_d0c64d22-1320-4a0c-bf2e-914827a5db8a
+Total jobs = 1
+Launching Job 1 out of 1
+Status: Running (Executing on YARN cluster with App id application_1677049801670_0010)
+
+--------------------------------------------------------------------------------
+        VERTICES      STATUS  TOTAL  COMPLETED  RUNNING  PENDING  FAILED  KILLED
+--------------------------------------------------------------------------------
+Map 1 ..........   SUCCEEDED      1          1        0        0       0       0
+--------------------------------------------------------------------------------
+VERTICES: 01/01  [==========================>>] 100%  ELAPSED TIME: 3.28 s
+--------------------------------------------------------------------------------
+Loading data to table riyaz_db.emp_details_partitioned partition (location=BBSR)
+Partition riyaz_db.emp_details_partitioned{location=BBSR} stats: [numFiles=1, numRows=1, totalSize=13, rawDataSize=12]
+OK
+Time taken: 7.144 seconds
+hive> select * from emp_details_partitioned;
+OK
+2       Ayesha  200     BBSR
+Time taken: 0.264 seconds, Fetched: 1 row(s)
+
+
+----------------------------------------------------------------------
+LOADING emp_details_partitioned TABLE with Dynamic Partitions
+----------------------------------------------------------------------
+
+
+hive> set hive.exec.dynamic.partition.mode=nonstrict;
+hive>
+    > insert overwrite table emp_details_partitioned
+    > partition (location)
+    > select * from emp_details;
+Query ID = root_20230222080706_a6c3076b-ac80-45e5-971d-c43463cafc23
+Total jobs = 1
+Launching Job 1 out of 1
+Status: Running (Executing on YARN cluster with App id application_1677049801670_0010)
+
+--------------------------------------------------------------------------------
+        VERTICES      STATUS  TOTAL  COMPLETED  RUNNING  PENDING  FAILED  KILLED
+--------------------------------------------------------------------------------
+Map 1 ..........   SUCCEEDED      1          1        0        0       0       0
+--------------------------------------------------------------------------------
+VERTICES: 01/01  [==========================>>] 100%  ELAPSED TIME: 2.84 s
+--------------------------------------------------------------------------------
+Loading data to table riyaz_db.emp_details_partitioned partition (location=null)
+         Time taken to load dynamic partitions: 0.928 seconds
+        Loading partition {location=BBSR}
+        Loading partition {location=HYD}
+        Loading partition {location=BLR}
+         Time taken for adding to write entity : 0
+Partition riyaz_db.emp_details_partitioned{location=BBSR} stats: [numFiles=1, numRows=1, totalSize=13, rawDataSize=12]
+Partition riyaz_db.emp_details_partitioned{location=BLR} stats: [numFiles=1, numRows=1, totalSize=12, rawDataSize=11]
+Partition riyaz_db.emp_details_partitioned{location=HYD} stats: [numFiles=1, numRows=1, totalSize=13, rawDataSize=12]
+OK
+Time taken: 6.417 seconds
+hive> select count (*) from emp_details where location='BBSR';
+Query ID = root_20230222080738_81fb68c3-562e-47ad-ab7d-d73303a053e7
+Total jobs = 1
+Launching Job 1 out of 1
+Status: Running (Executing on YARN cluster with App id application_1677049801670_0010)
+
+--------------------------------------------------------------------------------
+        VERTICES      STATUS  TOTAL  COMPLETED  RUNNING  PENDING  FAILED  KILLED
+--------------------------------------------------------------------------------
+Map 1 ..........   SUCCEEDED      1          1        0        0       0       0
+Reducer 2 ......   SUCCEEDED      1          1        0        0       0       0
+--------------------------------------------------------------------------------
+VERTICES: 02/02  [==========================>>] 100%  ELAPSED TIME: 2.25 s
+--------------------------------------------------------------------------------
+OK
+1
+
+hive> select count(*) from emp_details where emp_name='Riyaz';
+Query ID = root_20230222081002_3ae510f0-59ed-4bfc-aa6a-2e1dd063f22f
+Total jobs = 1
+Launching Job 1 out of 1
+Status: Running (Executing on YARN cluster with App id application_1677049801670_0010)
+
+--------------------------------------------------------------------------------
+        VERTICES      STATUS  TOTAL  COMPLETED  RUNNING  PENDING  FAILED  KILLED
+--------------------------------------------------------------------------------
+Map 1 ..........   SUCCEEDED      1          1        0        0       0       0
+Reducer 2 ......   SUCCEEDED      1          1        0        0       0       0
+--------------------------------------------------------------------------------
+VERTICES: 02/02  [==========================>>] 100%  ELAPSED TIME: 3.30 s
+--------------------------------------------------------------------------------
+OK
+0
+Time taken: 3.854 seconds, Fetched: 1 row(s)
+
+
+----------------------------------------------------------------------
+DROPIING PARTITIONS FROM emp_details_partitioned TABLE
+----------------------------------------------------------------------
+
+hive> alter table emp_details_partitioned drop partition(location='BBSR');
+Dropped the partition location=BBSR
+OK
+Time taken: 0.823 seconds
+
+
+
+hive> select * from emp_details_partitioned;
+OK
+1       Riyaz   100     BLR
+3       Kabeer  300     HYD
+Time taken: 0.464 seconds, Fetched: 2 row(s)
+
+
+
+
+
+
+
+

@@ -1,0 +1,249 @@
+hive> use riyaz_db;
+OK
+Time taken: 1.108 seconds
+hive> CREATE TABLE users
+    > (
+    > id INT,
+    > name STRING,
+    > salary INT,
+    > unit STRING
+    > )
+    > ROW FORMAT DELIMITED
+    > FIELDS TERMINATED BY '\t'
+    > STORED AS TEXTFILE;
+OK
+Time taken: 1.029 seconds
+hive> CREATE TABLE locations
+    > (
+    > id INT,
+    > location STRING
+    > )
+    > ROW FORMAT DELIMITED
+    > FIELDS TERMINATED BY '\t'
+    > STORED AS TEXTFILE;
+OK
+Time taken: 0.657 seconds
+
+[root@sandbox-hdp ~]# cp users.txt /tmp/
+
+[root@sandbox-hdp ~]# cp users.txt /tmp/test
+[root@sandbox-hdp ~]# ls  /tmp/test
+riyaz.csv  users.txt
+[root@sandbox-hdp ~]# cp locations.txt /tmp/
+[root@sandbox-hdp ~]# cp locations.txt /tmp/test
+[root@sandbox-hdp ~]# ls  /tmp/test
+locations.txt  riyaz.csv  users.txt
+
+hive>use riyaz_db;
+
+hive> LOAD DATA LOCAL INPATH '/tmp/users.txt' INTO TABLE users;
+Loading data to table riyaz_db.users
+Table riyaz_db.users stats: [numFiles=1, numRows=0, totalSize=115, rawDataSize=0]
+OK
+Time taken: 1.229 seconds
+
+hive> select * from users;
+OK
+1       Amit    100     DNA
+2       Sumit   200     DNA
+3       Yadav   300     DNA
+4       Sunil   500     FCS
+5       Kranti  100     FCS
+6       Mahoor  200     FCS
+8       Chandra 500     DNA
+Time taken: 0.304 seconds, Fetched: 7 row(s)
+
+
+hive> LOAD DATA LOCAL INPATH '/tmp/locations.txt' INTO TABLE locations;
+Loading data to table riyaz_db.locations
+Table riyaz_db.locations stats: [numFiles=1, numRows=0, totalSize=55, rawDataSize=0]
+OK
+Time taken: 1.607 seconds
+
+
+hive> select * from locations;
+OK
+1       UP
+2       BIHAR
+3       MP
+4       AP
+5       MAHARASHTRA
+6       GOA
+7       JHARKHAND
+Time taken: 0.222 seconds, Fetched: 7 row(s)
+
+
+hive> CREATE TABLE buck_users
+    > (
+    > id INT,
+    > name STRING,
+    > salary INT,
+    > unit STRING
+    > )
+    > CLUSTERED BY (id)
+    > SORTED BY (id)
+    > INTO 2 BUCKETS
+    > STORED AS TEXTFILE;
+OK
+Time taken: 0.678 seconds
+
+
+hive> CREATE TABLE buck_locations
+    > (
+    > id INT,
+    > location STRING
+    > )
+    > CLUSTERED BY (id)
+    > SORTED BY (id)
+    > INTO 2 BUCKETS
+    > STORED AS TEXTFILE;
+OK
+Time taken: 0.573 seconds
+
+
+hive> SET hive.enforce.bucketing=true;
+hive>
+    > INSERT OVERWRITE TABLE buck_users
+    > SELECT * FROM users;
+Query ID = root_20230222085538_19c819f8-264a-45f2-b5ee-5befe984a5b2
+Total jobs = 1
+Launching Job 1 out of 1
+Status: Running (Executing on YARN cluster with App id application_1677049801670_0016)
+
+--------------------------------------------------------------------------------
+        VERTICES      STATUS  TOTAL  COMPLETED  RUNNING  PENDING  FAILED  KILLED
+--------------------------------------------------------------------------------
+Map 1 ..........   SUCCEEDED      1          1        0        0       0       0
+Reducer 2 ......   SUCCEEDED      2          2        0        0       0       0
+--------------------------------------------------------------------------------
+VERTICES: 02/02  [==========================>>] 100%  ELAPSED TIME: 6.28 s
+--------------------------------------------------------------------------------
+Loading data to table riyaz_db.buck_users
+Table riyaz_db.buck_users stats: [numFiles=2, numRows=7, totalSize=115, rawDataSize=108]
+OK
+Time taken: 9.502 seconds
+
+hive> select * from buck_users;
+OK
+2       Sumit   200     DNA
+4       Sunil   500     FCS
+6       Mahoor  200     FCS
+8       Chandra 500     DNA
+1       Amit    100     DNA
+3       Yadav   300     DNA
+5       Kranti  100     FCS
+Time taken: 0.126 seconds, Fetched: 7 row(s)
+
+hive> INSERT OVERWRITE TABLE buck_locations
+    > SELECT * FROM locations;
+Query ID = root_20230222085718_3e3aec18-30d3-49bf-8a4d-ada328068be6
+Total jobs = 1
+Launching Job 1 out of 1
+Status: Running (Executing on YARN cluster with App id application_1677049801670_0016)
+
+--------------------------------------------------------------------------------
+        VERTICES      STATUS  TOTAL  COMPLETED  RUNNING  PENDING  FAILED  KILLED
+--------------------------------------------------------------------------------
+Map 1 ..........   SUCCEEDED      1          1        0        0       0       0
+Reducer 2 ......   SUCCEEDED      2          2        0        0       0       0
+--------------------------------------------------------------------------------
+VERTICES: 02/02  [==========================>>] 100%  ELAPSED TIME: 4.58 s
+--------------------------------------------------------------------------------
+Loading data to table riyaz_db.buck_locations
+Table riyaz_db.buck_locations stats: [numFiles=2, numRows=7, totalSize=55, rawDataSize=48]
+OK
+Time taken: 6.881 seconds
+hive> select * from buck_locations;
+OK
+2       BIHAR
+4       AP
+6       GOA
+1       UP
+3       MP
+5       MAHARASHTRA
+7       JHARKHAND
+Time taken: 0.128 seconds, Fetched: 7 row(s)
+
+-----------------------------------------------------------
+Checking whether the NO.of FILES CREATED IS 2 OR NOT 
+-------------------------------------------------------------
+
+hive> describe formatted buck_locations;
+OK
+# col_name              data_type               comment
+
+id                      int
+location                string
+
+# Detailed Table Information
+Database:               riyaz_db
+Owner:                  root
+CreateTime:             Wed Feb 22 08:51:22 UTC 2023
+LastAccessTime:         UNKNOWN
+Protect Mode:           None
+Retention:              0
+Location:               hdfs://sandbox-hdp.hortonworks.com:8020/apps/hive/warehouse/riyaz_db.db/buck_locations
+Table Type:             MANAGED_TABLE
+Table Parameters:
+        COLUMN_STATS_ACCURATE   {\"BASIC_STATS\":\"true\"}
+        SORTBUCKETCOLSPREFIX    TRUE
+        numFiles                2
+        numRows                 7
+        rawDataSize             48
+        totalSize               55
+        transient_lastDdlTime   1677056244
+
+# Storage Information
+SerDe Library:          org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
+InputFormat:            org.apache.hadoop.mapred.TextInputFormat
+OutputFormat:           org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
+Compressed:             No
+Num Buckets:            2
+Bucket Columns:         [id]
+Sort Columns:           [Order(col:id, order:1)]
+Storage Desc Params:
+        serialization.format    1
+Time taken: 0.499 seconds, Fetched: 33 row(s)
+
+
+
+hive> describe formatted buck_users;
+OK
+# col_name              data_type               comment
+
+id                      int
+name                    string
+salary                  int
+unit                    string
+
+# Detailed Table Information
+Database:               riyaz_db
+Owner:                  root
+CreateTime:             Wed Feb 22 08:51:00 UTC 2023
+LastAccessTime:         UNKNOWN
+Protect Mode:           None
+Retention:              0
+Location:               hdfs://sandbox-hdp.hortonworks.com:8020/apps/hive/warehouse/riyaz_db.db/buck_users
+Table Type:             MANAGED_TABLE
+Table Parameters:
+        COLUMN_STATS_ACCURATE   {\"BASIC_STATS\":\"true\"}
+        SORTBUCKETCOLSPREFIX    TRUE
+        numfiles                2
+        numRows                 7
+        rawDataSize             108
+        totalSize               115
+        transient_lastDdlTime   1677056146
+
+# Storage Information
+SerDe Library:          org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
+InputFormat:            org.apache.hadoop.mapred.TextInputFormat
+OutputFormat:           org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
+Compressed:             No
+Num Buckets:            2
+Bucket Columns:         [id]
+Sort Columns:           [Order(col:id, order:1)]
+Storage Desc Params:
+        serialization.format    1
+Time taken: 0.455 seconds, Fetched: 35 row(s)
+
+

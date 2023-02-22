@@ -1,0 +1,68 @@
+[root@sandbox-hdp ~]# vi regex_file.txt
+
+[root@sandbox-hdp ~]# cp regex_file.txt /tmp/
+
+[root@sandbox-hdp ~]# mkdir /tmp/test
+
+[root@sandbox-hdp ~]# chmod 777 /tmp/test
+
+[root@sandbox-hdp ~]# ls /tmp/test
+
+[root@sandbox-hdp ~]# cp regex_file.txt /tmp/test
+
+[root@sandbox-hdp ~]# ls /tmp/test
+
+
+[root@sandbox-hdp ~]# hive
+
+
+0: jdbc:hive2://sandbox-hdp.hortonworks.com:2> use riyaz_db;
+
+
+0: jdbc:hive2://sandbox-hdp.hortonworks.com:2> CREATE TABLE userlog(
+ . . . . . . . . . . . . . . .>  host string,
+ . . . . . . . . . . . . . . .>  user_name string,
+ . . . . . . . . . . . . . . .>  domain string
+ . . . . . . . . . . . . . . .>  )
+ . . . . . . . . . . . . . . .>  ROW FORMAT SERDE
+. . . . . . . . . . . .>  'org.apache.hadoop.hive.contrib.serde2.RegexSerDe'
+. . . . . . . . . . . . . . .>  WITH SERDEPROPERTIES(
+. . . . . . . . . . . . . . .>  'input.regex' = '(.*)/(.*)@(.*)',
+. . . . . . . . . . . . . . .> 
+ 'output.format.string' = '%1$s %2$s %3$s')
+. . . . . . . . . . . . . . .> STORED AS TEXTFILE;
+
+
+0: jdbc:hive2://sandbox-hdp.hortonworks.com:2> LOAD DATA LOCAL INPATH '/tmp/regex_file.txt' INTO TABLE userlog;
+
+
+0: jdbc:hive2://sandbox-hdp.hortonworks.com:2> SELECT * FROM userlog;
+
+
++---------------+--------------------+-----------------+
+| userlog.host  | userlog.user_name  | userlog.domain  |
++---------------+--------------------+-----------------+
+| host1         | amit               | gmail           |
+| host2         | sumit              | facebook        |
+| host3         | raghav             | gmail           |
+| host4         | rohit              | gmail           |
++---------------+--------------------+-----------------+
+
+
+
+0: jdbc:hive2://sandbox-hdp.hortonworks.com:2> SELECT host, user_name FROM userlog;
+
+
++--------+------------+
+|  host  | user_name  |
++--------+------------+
+| host1  | amit       |
+| host2  | sumit      |
+| host3  | raghav     |
+| host4  | rohit      |
++--------+------------+
+
+
+
+
+
